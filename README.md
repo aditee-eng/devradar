@@ -1,4 +1,4 @@
-echo "# DevRadar
+# DevRadar
 
 Track your developer activity across GitHub and LeetCode in one place.
 
