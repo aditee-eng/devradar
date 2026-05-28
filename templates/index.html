@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DevRadar</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #7c9e87;
+      --accent-light: #eef3ef;
+      --accent-mid: #c8d9cb;
+      --bg: #b8d4be;
+      --white: #ffffff;
+      --border: #e8e3db;
+      --text: #1a1a1a;
+      --muted: #999;
+      --faint: #bbb;
+    }
+    body { background: #b8d4be; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+    /* NAVBAR */
+    .navbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 32px; min-height: 54px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; flex-wrap: nowrap; }
+    .nav-logo { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); letter-spacing: -0.3px; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 6px; }
+    .nav-link { font-size: 12px; color: var(--muted); cursor: pointer; padding: 6px 12px; border-radius: 6px; font-weight: 400; border: none; background: none; }
+    .nav-link.active { color: var(--text); background: var(--accent-light); font-weight: 500; }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+    .nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #fff; }
+    .nav-name { font-size: 12px; font-weight: 500; color: var(--text); }
+    .live-badge { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); background: var(--accent-light); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--accent-mid); }
+    .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+    /* BODY */
+    .body { display: grid; grid-template-columns: 1fr 280px; gap: 20px; padding: 24px 32px; max-width: 1100px; margin: 0 auto; }
+
+    /* HERO */
+    .hero { background: var(--text); border-radius: 16px; padding: 32px; margin-bottom: 16px; }
+    .hero-eyebrow { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 10px; }
+    .hero-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: #fff; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 8px; }
+    .hero-title span { color: var(--accent-mid); }
+    .hero-desc { font-size: 12px; color: #666; line-height: 1.6; margin-bottom: 24px; }
+    .hero-stats { display: flex; gap: 32px; }
+    .hero-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 24px; font-weight: 500; color: #fff; letter-spacing: -0.5px; }
+    .hero-stat-key { font-size: 10px; color: #555; margin-top: 3px; text-transform: uppercase; letter-spacing: .06em; }
+
+    /* CARDS */
+    .cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .card { background: var(--white); border-radius: 12px; padding: 20px; border: 1px solid var(--border); }
+    .card-label { font-size: 10px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+    .card-val { font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 500; color: var(--text); letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+    .card-delta { font-size: 11px; color: var(--faint); }
+    .card-delta.pos { color: var(--accent); font-weight: 500; }
+
+    /* PANELS */
+    .panel { background: var(--white); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; overflow: hidden; }
+    .panel-header { font-size: 10px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--bg); }
+    .panel-body { padding: 16px 18px; }
+
+    /* LC BARS */
+    .lc-bars { display: flex; flex-direction: column; gap: 12px; }
+    .lc-row { display: flex; align-items: center; gap: 12px; }
+    .lc-key { font-size: 10px; color: var(--faint); width: 48px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; }
+    .lc-track { flex: 1; height: 3px; background: var(--border); border-radius: 2px; }
+    .lc-fill { height: 3px; border-radius: 2px; background: var(--accent); }
+    .lc-num { font-size: 11px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-weight: 500; width: 28px; text-align: right; }
+
+    /* REPOS */
+    .repo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .repo-item:last-child { border-bottom: none; }
+    .repo-name { font-size: 11px; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+    .repo-time { font-size: 10px; color: var(--faint); }
+
+    /* DIGEST */
+    .digest-card { background: var(--accent-light); border-radius: 12px; padding: 20px; border: 1px solid var(--accent-mid); margin-bottom: 14px; }
+    .digest-label { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+    .digest-text { font-size: 13px; color: #4a6b52; line-height: 1.85; }
+    .digest-text strong { color: #2a4a32; font-weight: 600; }
+    .digest-loading { font-size: 12px; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+
+    /* SIDEBAR */
+    .sidebar-card { background: var(--white); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 12px; }
+    .sidebar-label { font-size: 10px; font-weight: 600; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; }
+    .streak-big { font-family: 'DM Serif Display', serif; font-size: 52px; color: var(--text); letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+    .streak-sub { font-size: 11px; color: var(--muted); }
+    .streak-bar { height: 3px; background: var(--border); border-radius: 2px; margin-top: 14px; }
+    .streak-fill { height: 3px; background: var(--accent); border-radius: 2px; width: 0%; transition: width 1s ease; }
+    .stat-list-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .stat-list-item:last-child { border-bottom: none; }
+    .stat-list-key { font-size: 12px; color: var(--muted); }
+    .stat-list-val { font-size: 12px; font-weight: 500; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+    /* LOADING */
+    .loading { text-align: center; padding: 60px 20px; }
+    .loading-text { font-size: 12px; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+    .dots span { animation: blink 1.2s infinite; }
+    .dots span:nth-child(2) { animation-delay: .2s; }
+    .dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+    /* TABS */
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- SETUP PAGE -->
+<div id="setup-page" style="display:none">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)">
+    <div style="background:var(--white);border-radius:16px;padding:40px;border:1px solid var(--border);width:100%;max-width:420px;margin:20px">
+      <div style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--text);margin-bottom:8px">Dev<span style="color:var(--accent)">/</span>Radar</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6">Track your GitHub and LeetCode activity in one place.</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">GitHub Username</div>
+        <input id="setup-github" type="text" placeholder="e.g. aditee-eng" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);outline:none"/>
+      </div>
+      <div style="margin-bottom:24px">
+        <div style="font-size:10px;font-weight:600;color:var(--faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">LeetCode Username</div>
+        <input id="setup-leetcode" type="text" placeholder="e.g. aditee" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);outline:none"/>
+      </div>
+      <button onclick="saveSetup()" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer">Launch my radar</button>
+      <div id="setup-error" style="font-size:11px;color:#c0392b;margin-top:10px;display:none">Please enter both usernames.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none">
+
+
+<div class="navbar">
+  <div class="nav-logo">Dev<span>/</span>Radar</div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('overview', this)">Overview</button>
+    <button class="nav-link" onclick="showPage('history', this)">History</button>
+    <button class="nav-link" onclick="showPage('digest', this)">Digest</button>
+  </div>
+  <div class="nav-right">
+    <div class="live-badge"><div class="live-dot"></div>live</div>
+    <div class="nav-avatar" id="nav-avatar">A</div>
+    <span class="nav-name" id="nav-name">loading...</span>
+    <button onclick="logout()" style="font-size:11px;color:var(--muted);background:none;border:1px solid var(--border);border-radius:6px;padding:3px 8px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">Switch</button>
+  </div>
+</div>
+
+<!-- OVERVIEW PAGE -->
+  </div>
+
+<!-- OVERVIEW PAGE -->
+<div id="page-overview" class="page active">
+  <div class="body">
+    <div class="left">
+      <div class="hero">
+        <div class="hero-eyebrow" id="hero-date">Loading...</div>
+        <div class="hero-title">Your dev activity,<br/><span>at a glance.</span></div>
+        <div class="hero-desc">GitHub + LeetCode tracked automatically. AI digest every week.</div>
+        <div class="hero-stats">
+          <div><div class="hero-stat-val" id="hero-commits">--</div><div class="hero-stat-key">commits</div></div>
+          <div><div class="hero-stat-val" id="hero-lc">--</div><div class="hero-stat-key">lc solved</div></div>
+          <div><div class="hero-stat-val" id="hero-repos">--</div><div class="hero-stat-key">repos active</div></div>
+        </div>
+      </div>
+
+      <div class="cards-row">
+        <div class="card">
+          <div class="card-label">Commits this week</div>
+          <div class="card-val" id="card-commits">--</div>
+          <div class="card-delta pos" id="card-commits-delta"></div>
+        </div>
+        <div class="card">
+          <div class="card-label">Pull requests</div>
+          <div class="card-val" id="card-prs">--</div>
+          <div class="card-delta">opened this week</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">LeetCode breakdown</div>
+        <div class="panel-body">
+          <div class="lc-bars">
+            <div class="lc-row"><span class="lc-key">easy</span><div class="lc-track"><div class="lc-fill" id="bar-easy" style="width:0%"></div></div><span class="lc-num" id="num-easy">--</span></div>
+            <div class="lc-row"><span class="lc-key">medium</span><div class="lc-track"><div class="lc-fill" id="bar-medium" style="width:0%"></div></div><span class="lc-num" id="num-medium">--</span></div>
+            <div class="lc-row"><span class="lc-key">hard</span><div class="lc-track"><div class="lc-fill" id="bar-hard" style="width:0%"></div></div><span class="lc-num" id="num-hard">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">Active repos</div>
+        <div class="panel-body" id="repos-list">
+          <div class="loading-text">Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+        </div>
+      </div>
+
+      <div class="digest-card">
+        <div class="digest-label">Weekly digest</div>
+        <div class="digest-text" id="digest-text">
+          <span class="digest-loading">Generating your digest<span class="dots"><span>.</span><span>.</span><span>.</span></span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="sidebar-card">
+        <div class="sidebar-label">Current streak</div>
+        <div class="streak-big" id="streak-num">--</div>
+        <div class="streak-sub">days on LeetCode</div>
+        <div class="streak-bar"><div class="streak-fill" id="streak-fill"></div></div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-label">LeetCode stats</div>
+        <div class="stat-list-item"><span class="stat-list-key">Total solved</span><span class="stat-list-val" id="lc-total">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">Easy</span><span class="stat-list-val" id="lc-easy">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">Medium</span><span class="stat-list-val" id="lc-medium">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">Hard</span><span class="stat-list-val" id="lc-hard">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">Active days</span><span class="stat-list-val" id="lc-active">--</span></div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-label">GitHub this week</div>
+        <div class="stat-list-item"><span class="stat-list-key">Commits</span><span class="stat-list-val" id="gh-commits">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">Pull requests</span><span class="stat-list-val" id="gh-prs">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">Active repos</span><span class="stat-list-val" id="gh-repos">--</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div class="body">
+    <div style="grid-column: 1 / -1;">
+      <div class="panel">
+        <div class="panel-header">GitHub history</div>
+        <div class="panel-body" id="github-history-static">
+           <div style="font-size:12px;color:var(--muted);line-height:1.8;padding:8px 0">
+           History tracks your activity over time. Visit DevRadar weekly and your progress will appear here.
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">LeetCode history</div>
+        <div class="panel-body" id="leetcode-history-static">
+          <div style="font-size:12px;color:var(--muted);line-height:1.8;padding:8px 0">
+          Your LeetCode progress will be tracked here over time.
+         </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DIGEST PAGE -->
+<div id="page-digest" class="page">
+  <div class="body">
+    <div style="grid-column: 1 / -1; max-width: 640px;">
+      <div class="digest-card" style="padding: 28px;">
+        <div class="digest-label">Weekly digest</div>
+        <div class="digest-text" id="digest-full">
+          <span class="digest-loading">Generating<span class="dots"><span>.</span><span>.</span><span>.</span></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  function logout() {
+  localStorage.clear()
+  document.getElementById("main-app").style.display = "none"
+  document.getElementById("setup-page").style.display = "block"
+  document.getElementById("setup-error").style.display = "none"
+}
+  function renderDashboard(data) {
+  const g = data.github
+  const l = data.leetcode
+
+  document.getElementById("nav-name").textContent = g.username
+  document.getElementById("nav-avatar").textContent = g.username[0].toUpperCase()
+  document.getElementById("hero-commits").textContent = g.commits_this_week
+  document.getElementById("hero-lc").textContent = l.total_solved
+  document.getElementById("hero-repos").textContent = g.repo_count
+  document.getElementById("card-commits").textContent = g.commits_this_week
+  document.getElementById("card-prs").textContent = g.prs_opened
+
+  const total = l.total_solved || 1
+  document.getElementById("num-easy").textContent = l.easy_solved
+  document.getElementById("num-medium").textContent = l.medium_solved
+  document.getElementById("num-hard").textContent = l.hard_solved
+  document.getElementById("bar-easy").style.width = (l.easy_solved / total * 100) + "%"
+  document.getElementById("bar-medium").style.width = (l.medium_solved / total * 100) + "%"
+  document.getElementById("bar-hard").style.width = (l.hard_solved / total * 100) + "%"
+
+  const reposList = document.getElementById("repos-list")
+  if (g.repos_active && g.repos_active.length > 0) {
+    reposList.innerHTML = g.repos_active.map(r =>
+      `<div class="repo-item"><span class="repo-name">${r}</span><span class="repo-time">this week</span></div>`
+    ).join("")
+  } else {
+    reposList.innerHTML = `<div style="font-size:12px;color:var(--faint)">No repo activity this week</div>`
+  }
+
+  document.getElementById("streak-num").textContent = l.streak
+  document.getElementById("streak-fill").style.width = Math.min(l.streak, 100) + "%"
+  document.getElementById("lc-total").textContent = l.total_solved
+  document.getElementById("lc-easy").textContent = l.easy_solved
+  document.getElementById("lc-medium").textContent = l.medium_solved
+  document.getElementById("lc-hard").textContent = l.hard_solved
+  document.getElementById("lc-active").textContent = l.total_active_days
+  document.getElementById("gh-commits").textContent = g.commits_this_week
+  document.getElementById("gh-prs").textContent = g.prs_opened
+  document.getElementById("gh-repos").textContent = g.repo_count
+}
+  // check if usernames are saved
+function checkSetup() {
+  const github = localStorage.getItem("dr_github")
+  const leetcode = localStorage.getItem("dr_leetcode")
+  if (github && leetcode) {
+    document.getElementById("setup-page").style.display = "none"
+    document.getElementById("main-app").style.display = "block"
+    loadData(github, leetcode)
+  } else {
+    document.getElementById("setup-page").style.display = "block"
+    document.getElementById("main-app").style.display = "none"
+  }
+}
+
+function saveSetup() {
+  const github = document.getElementById("setup-github").value.trim()
+  const leetcode = document.getElementById("setup-leetcode").value.trim()
+  if (!github || !leetcode) {
+    document.getElementById("setup-error").style.display = "block"
+    return
+  }
+  localStorage.setItem("dr_github", github)
+  localStorage.setItem("dr_leetcode", leetcode)
+  document.getElementById("setup-page").style.display = "none"
+  document.getElementById("main-app").style.display = "block"
+  loadData(github, leetcode)
+}
+
+function loadData(github, leetcode) {
+  // show loading state on all values
+  const dashIds = ["hero-commits", "hero-lc", "hero-repos", "card-commits", 
+    "card-prs", "num-easy", "num-medium", "num-hard", "streak-num",
+    "lc-total", "lc-easy", "lc-medium", "lc-hard", "lc-active",
+    "gh-commits", "gh-prs", "gh-repos"]
+  
+  dashIds.forEach(id => {
+    const el = document.getElementById(id)
+    if (el) el.innerHTML = `<span class="dots"><span>.</span><span>.</span><span>.</span></span>`
+  })
+
+  document.getElementById("repos-list").innerHTML = 
+    `<div class="loading-text">Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>`
+
+  fetch(`/api/stats?github=${github}&leetcode=${leetcode}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        localStorage.clear()
+        document.getElementById("main-app").style.display = "none"
+        document.getElementById("setup-page").style.display = "block"
+        document.getElementById("setup-error").textContent = data.error
+        document.getElementById("setup-error").style.display = "block"
+        return
+      }
+      renderDashboard(data)
+    })
+    .catch(err => console.error(err))
+
+  fetch(`/api/digest?github=${github}&leetcode=${leetcode}`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById("digest-text").innerHTML = data.digest
+      document.getElementById("digest-full").innerHTML = data.digest
+    })
+    .catch(err => {
+      document.getElementById("digest-text").textContent = "Could not load digest."
+      document.getElementById("digest-full").textContent = "Could not load digest."
+    })
+}
+
+// call on page load
+checkSetup()
+  const today = new Date()
+  document.getElementById("hero-date").textContent = "Week of " + today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+
+  function showPage(name, btn) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"))
+    document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"))
+    document.getElementById("page-" + name).classList.add("active")
+    btn.classList.add("active")
+  }
+
+</script>
+</div> <!-- end main-app -->
+</body>
+</html>
