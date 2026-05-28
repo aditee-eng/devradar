@@ -1,12 +1,17 @@
 import os
 from flask import Flask, render_template, jsonify, request
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 from github_fetcher import get_github_activity
 from leetcode_fetcher import get_leetcode_activity
 from digest import generate_weekly_digest
-from datetime import datetime, timedelta
+from database import init_db, save_github_snapshot, save_leetcode_snapshot, get_github_history, get_leetcode_history
 
-# simple in-memory cache
+load_dotenv()
+
+app = Flask(__name__)
+init_db()
+
 cache = {}
 CACHE_DURATION = timedelta(hours=1)
 
@@ -19,10 +24,6 @@ def get_cached(key):
 
 def set_cached(key, data):
     cache[key] = (data, datetime.now())
-
-load_dotenv()
-
-app = Flask(__name__)
 
 @app.route("/")
 def index():
@@ -50,7 +51,27 @@ def stats():
     if leetcode.get("error"):
         return jsonify({"error": f"LeetCode user '{leetcode_username}' not found. Check your username."}), 404
 
-    result = {"github": github, "leetcode": leetcode}
+    # save snapshot for history
+    save_github_snapshot(github_username, github)
+    save_leetcode_snapshot(leetcode_username, leetcode)
+
+    # fetch history
+    github_history = get_github_history(github_username)
+    leetcode_history = get_leetcode_history(leetcode_username)
+
+    result = {
+        "github": github,
+        "leetcode": leetcode,
+        "github_history": [
+            {"date": r[0][:10], "commits": r[1], "prs": r[2], "repos": r[3]}
+            for r in github_history
+        ],
+        "leetcode_history": [
+            {"date": r[0][:10], "total": r[1], "easy": r[2], "medium": r[3], "hard": r[4], "streak": r[5]}
+            for r in leetcode_history
+        ]
+    }
+
     set_cached(cache_key, result)
     return jsonify(result)
 
@@ -69,7 +90,7 @@ def digest():
 
     github = get_github_activity(github_username)
     leetcode = get_leetcode_activity(leetcode_username)
-    text = generate_weekly_digest(github, leetcode)
+    text = generate_weekly_digest(github_username, leetcode_username)
 
     result = {"digest": text}
     set_cached(cache_key, result)

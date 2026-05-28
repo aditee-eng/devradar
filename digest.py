@@ -7,9 +7,9 @@ load_dotenv()
 
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-def generate_weekly_digest(github: dict, leetcode: dict) -> str:
-    github_history = get_github_history()
-    leetcode_history = get_leetcode_history()
+def generate_weekly_digest(github_username: str, leetcode_username: str) -> str:
+    github_history = get_github_history(github_username)
+    leetcode_history = get_leetcode_history(leetcode_username)
 
     # get this week's data
     github_now = github_history[0] if github_history else None
