@@ -90,7 +90,7 @@ def digest():
 
     github = get_github_activity(github_username)
     leetcode = get_leetcode_activity(leetcode_username)
-    text = generate_weekly_digest(github_username, leetcode_username)
+    text = generate_weekly_digest(github, leetcode)
 
     result = {"digest": text}
     set_cached(cache_key, result)
