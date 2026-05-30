@@ -53,6 +53,7 @@
     .card-val { font-family: 'JetBrains Mono', monospace; font-size: 34px; font-weight: 500; color: var(--text); letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
     .card-delta { font-size: 11px; color: var(--faint); }
     .card-delta.pos { color: var(--accent); font-weight: 500; }
+    .card-delta.neg { color: #c0392b; font-weight: 500; }
 
     /* PANELS */
     .panel { background: var(--white); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; overflow: hidden; }
@@ -189,6 +190,13 @@
       </div>
 
       <div class="panel">
+        <div class="panel-header">LeetCode activity — last 6 months</div>
+        <div class="panel-body">
+         <div id="heatmap-container" style="overflow-x:auto"></div>
+       </div>
+      </div>
+
+      <div class="panel">
         <div class="panel-header">Active repos</div>
         <div class="panel-body" id="repos-list">
           <div class="loading-text">Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
@@ -214,6 +222,7 @@
       <div class="sidebar-card">
         <div class="sidebar-label">LeetCode stats</div>
         <div class="stat-list-item"><span class="stat-list-key">Total solved</span><span class="stat-list-val" id="lc-total">--</span></div>
+        <div class="stat-list-item"><span class="stat-list-key">vs last visit</span><span class="stat-list-val" id="lc-delta" style="font-size:11px">--</span></div>
         <div class="stat-list-item"><span class="stat-list-key">Easy</span><span class="stat-list-val" id="lc-easy">--</span></div>
         <div class="stat-list-item"><span class="stat-list-key">Medium</span><span class="stat-list-val" id="lc-medium">--</span></div>
         <div class="stat-list-item"><span class="stat-list-key">Hard</span><span class="stat-list-val" id="lc-hard">--</span></div>
@@ -267,6 +276,101 @@
 
 
 <script>
+  function renderHeatmap(submissionCalendar) {
+  const container = document.getElementById("heatmap-container")
+  if (!container) return
+
+  const today = new Date()
+  const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()))
+
+  const weeks = []
+  let current = new Date(todayUTC)
+  current.setUTCDate(current.getUTCDate() - current.getUTCDay())
+  current.setUTCDate(current.getUTCDate() - 25 * 7)
+
+  for (let w = 0; w < 26; w++) {
+  const week = []
+  for (let d = 0; d < 7; d++) {
+    const date = new Date(current)
+    const utcMidnight = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+    const ts = String(Math.floor(utcMidnight / 1000))
+    const count = submissionCalendar[ts] || 0
+    week.push({ date, count })
+    current.setUTCDate(current.getUTCDate() + 1)
+  }
+  weeks.push(week)
+}
+
+  // color scale
+  function getColor(count) {
+    if (count === 0) return "#f0f5f1"
+    if (count <= 2) return "#c8d9cb"
+    if (count <= 5) return "#7c9e87"
+    if (count <= 9) return "#4a6e55"
+    return "#2a4a32"
+  }
+
+  // day labels
+  const dayLabels = ["", "Mon", "", "Wed", "", "Fri", ""]
+
+  // build SVG
+  const cellSize = 12
+  const gap = 3
+  const labelWidth = 28
+  const headerHeight = 20
+  const totalWidth = labelWidth + weeks.length * (cellSize + gap)
+  const totalHeight = headerHeight + 7 * (cellSize + gap)
+
+  // month labels
+  let monthLabels = ""
+  let lastMonth = -1
+  weeks.forEach((week, wi) => {
+    const firstDay = week[0].date
+    if (firstDay.getMonth() !== lastMonth) {
+      lastMonth = firstDay.getMonth()
+      const x = labelWidth + wi * (cellSize + gap)
+      const monthName = firstDay.toLocaleDateString("en-US", { month: "short" })
+      monthLabels += `<text x="${x}" y="12" font-size="10" fill="var(--faint)" font-family="JetBrains Mono, monospace">${monthName}</text>`
+    }
+  })
+
+  // build cells
+  let cells = ""
+  weeks.forEach((week, wi) => {
+    week.forEach((day, di) => {
+      const x = labelWidth + wi * (cellSize + gap)
+      const y = headerHeight + di * (cellSize + gap)
+      const dateStr = day.date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+      cells += `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" rx="2" fill="${getColor(day.count)}" title="${dateStr}: ${day.count} submissions"/>`
+    })
+  })
+
+  // day labels
+  let dayLabelsSvg = ""
+  dayLabels.forEach((label, i) => {
+    if (label) {
+      const y = headerHeight + i * (cellSize + gap) + cellSize - 2
+      dayLabelsSvg += `<text x="0" y="${y}" font-size="9" fill="var(--faint)" font-family="JetBrains Mono, monospace">${label}</text>`
+    }
+  })
+
+  container.innerHTML = `
+    <svg width="${totalWidth}" height="${totalHeight}" xmlns="http://www.w3.org/2000/svg">
+      ${monthLabels}
+      ${dayLabelsSvg}
+      ${cells}
+    </svg>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px;font-size:10px;color:var(--faint);font-family:'JetBrains Mono',monospace">
+      <span>Less</span>
+      <rect width="10" height="10" fill="#f0f5f1" rx="2"/>
+      <svg width="10" height="10"><rect width="10" height="10" fill="#f0f5f1" rx="2"/></svg>
+      <svg width="10" height="10"><rect width="10" height="10" fill="#c8d9cb" rx="2"/></svg>
+      <svg width="10" height="10"><rect width="10" height="10" fill="#7c9e87" rx="2"/></svg>
+      <svg width="10" height="10"><rect width="10" height="10" fill="#4a6e55" rx="2"/></svg>
+      <svg width="10" height="10"><rect width="10" height="10" fill="#2a4a32" rx="2"/></svg>
+      <span>More</span>
+    </div>`
+}
   function logout() {
   localStorage.clear()
   document.getElementById("main-app").style.display = "none"
@@ -284,6 +388,27 @@
   document.getElementById("hero-repos").textContent = g.repo_count
   document.getElementById("card-commits").textContent = g.commits_this_week
   document.getElementById("card-prs").textContent = g.prs_opened
+
+  // weekly comparison
+if (data.github_history && data.github_history.length >= 2) {
+  const thisWeek = data.github_history[0].commits
+  const lastWeek = data.github_history[1].commits
+  const diff = thisWeek - lastWeek
+  const el = document.getElementById("card-commits-delta")
+  el.textContent = (diff >= 0 ? "+" : "") + diff + " vs last week"
+  el.className = "card-delta " + (diff >= 0 ? "pos" : "neg")
+}
+
+if (data.leetcode_history && data.leetcode_history.length >= 2) {
+  const thisWeek = data.leetcode_history[0].total
+  const lastWeek = data.leetcode_history[1].total
+  const diff = thisWeek - lastWeek
+  const lcDelta = document.getElementById("lc-delta")
+  if (lcDelta) {
+    lcDelta.textContent = (diff >= 0 ? "+" : "") + diff + " vs last visit"
+    lcDelta.className = "card-delta " + (diff >= 0 ? "pos" : "")
+  }
+}
 
   const total = l.total_solved || 1
   document.getElementById("num-easy").textContent = l.easy_solved
@@ -364,6 +489,10 @@
     document.getElementById("leetcode-history-table").innerHTML = 
       `<div style="font-size:12px;color:var(--muted)">Visit again next week to see your progress over time.</div>`
   }
+
+  if (l.submission_calendar) {
+  renderHeatmap(l.submission_calendar)
+}
 }
   // check if usernames are saved
 function checkSetup() {

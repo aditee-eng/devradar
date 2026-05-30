@@ -93,7 +93,8 @@ def get_leetcode_activity(username: str) -> dict:
     "hard_solved": stats.get("Hard", 0),
     "streak": calculate_current_streak(calendar.get("submissionCalendar", "{}")),
     "total_active_days": calendar.get("totalActiveDays", 0),
-    "submissions_today": submissions_today
+    "submissions_today": submissions_today,
+    "submission_calendar": json.loads(calendar.get("submissionCalendar", "{}"))
 }
 
 if __name__ == "__main__":
