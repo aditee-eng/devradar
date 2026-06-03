@@ -1,0 +1,6 @@
+flask
+requests
+groq
+python-dotenv
+apscheduler
+flask-limiter

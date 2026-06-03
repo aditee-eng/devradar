@@ -6,9 +6,28 @@ from github_fetcher import get_github_activity
 from leetcode_fetcher import get_leetcode_activity
 from digest import generate_weekly_digest
 from database import init_db, save_github_snapshot, save_leetcode_snapshot, get_github_history, get_leetcode_history
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["100 per hour"]
+)
+
 
 load_dotenv()
 
+import re
+
+def sanitize_username(username: str) -> str:
+    """Only allow alphanumeric, hyphens and underscores — valid for both GitHub and LeetCode."""
+    if not username:
+        return None
+    cleaned = re.sub(r'[^a-zA-Z0-9_\-]', '', username)
+    if len(cleaned) > 39:  # GitHub max username length
+        return None
+    return cleaned
 app = Flask(__name__)
 init_db()
 
@@ -25,18 +44,35 @@ def get_cached(key):
 def set_cached(key, data):
     cache[key] = (data, datetime.now())
 
+def clean_cache():
+    """Remove expired cache entries."""
+    now = datetime.now()
+    expired = [k for k, (_, ts) in cache.items() if now - ts > CACHE_DURATION]
+    for k in expired:
+        del cache[k]
+
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
 @app.route("/api/stats")
+@limiter.limit("20 per minute")
+@app.route("/api/stats")
 def stats():
-    github_username = request.args.get("github")
-    leetcode_username = request.args.get("leetcode")
+    clean_cache()
+    github_username = sanitize_username(request.args.get("github", ""))
+    leetcode_username = sanitize_username(request.args.get("leetcode", ""))
 
     if not github_username or not leetcode_username:
-        return jsonify({"error": "Missing github or leetcode username"}), 400
-
+      return jsonify({"error": "Invalid or missing usernames"}), 400
     cache_key = f"{github_username}:{leetcode_username}"
     cached = get_cached(cache_key)
     if cached:
@@ -76,12 +112,14 @@ def stats():
     return jsonify(result)
 
 @app.route("/api/digest")
+@limiter.limit("10 per minute")
+@app.route("/api/digest")
 def digest():
-    github_username = request.args.get("github")
-    leetcode_username = request.args.get("leetcode")
+    github_username = sanitize_username(request.args.get("github", ""))
+    leetcode_username = sanitize_username(request.args.get("leetcode", ""))
 
     if not github_username or not leetcode_username:
-        return jsonify({"error": "Missing usernames"}), 400
+      return jsonify({"error": "Invalid or missing usernames"}), 400
 
     cache_key = f"digest:{github_username}:{leetcode_username}"
     cached = get_cached(cache_key)
