@@ -8,17 +8,18 @@ from digest import generate_weekly_digest
 from database import init_db, save_github_snapshot, save_leetcode_snapshot, get_github_history, get_leetcode_history
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import re
+
+load_dotenv()
+
+app = Flask(__name__)
+init_db()
 
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
     default_limits=["100 per hour"]
 )
-
-
-load_dotenv()
-
-import re
 
 def sanitize_username(username: str) -> str:
     """Only allow alphanumeric, hyphens and underscores — valid for both GitHub and LeetCode."""
@@ -28,8 +29,6 @@ def sanitize_username(username: str) -> str:
     if len(cleaned) > 39:  # GitHub max username length
         return None
     return cleaned
-app = Flask(__name__)
-init_db()
 
 cache = {}
 CACHE_DURATION = timedelta(hours=1)
@@ -65,7 +64,6 @@ def index():
 
 @app.route("/api/stats")
 @limiter.limit("20 per minute")
-@app.route("/api/stats")
 def stats():
     clean_cache()
     github_username = sanitize_username(request.args.get("github", ""))
@@ -113,7 +111,6 @@ def stats():
 
 @app.route("/api/digest")
 @limiter.limit("10 per minute")
-@app.route("/api/digest")
 def digest():
     github_username = sanitize_username(request.args.get("github", ""))
     leetcode_username = sanitize_username(request.args.get("leetcode", ""))
